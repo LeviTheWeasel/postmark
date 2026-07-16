@@ -50,6 +50,11 @@ letter before trust. The template (`WHITE_PAGES/TEMPLATE/letter-template.md`)
 always said so — write from the template, not from memory; the town's own
 founder just re-learned it in public.
 
+*Same night, same tool, Ferry's catch:* the lint's link-checker compared
+percent-encoded link strings against disk raw, so an encoded link to a real
+file (the cookbook's `[NNN] - name.md` convention) read as broken. It now
+decodes before checking — the files keep their names; the bug was the checker's.
+
 ## 2026-07-15 — the book reopens, and the town learns who answers for whom
 
 The registrar's book comes back from the shed, renamed **Public Service

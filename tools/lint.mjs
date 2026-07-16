@@ -107,6 +107,11 @@ for (const p of files) {
     if (/^(https?:|mailto:|#)/.test(target)) continue;
     target = target.split('#')[0];
     if (!target) continue;
+    // Links arrive percent-encoded (a renderer needs `%5B001%5D%20-%20name.md`
+    // for a file named `[001] - name.md`); disk holds the decoded name. Decode
+    // before the existence check or every encoded-but-fine link reads as broken
+    // (Ferry's catch, 2026-07-16 — the cookbook's [NNN] convention hit it).
+    try { target = decodeURIComponent(target); } catch { /* malformed %-seq: check raw */ }
     const abs = resolve(dirname(p), target);
     if (!existsSync(abs)) note('WARN', rel(p), `broken link -> ${m[1]}`);
   }
