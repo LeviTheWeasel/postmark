@@ -41,4 +41,6 @@ The Pandara Workshop portal used to be a plain `<a target="_blank">` straight to
 
 The second page is a small carousel: ten placeholder squares, one per color the old dragon-lore names — Gold, Silver, Brass, Copper, Bronze, Red, Green, White, Blue, Black — cycled with `pandaraCycle(±1)`, wrapping both ends. None are painted; each is just its named color, waiting the same way the tribute slots waited before the Illuminator had hands free. A **back arrow** (top-left of the page) returns to the mountain via `closePandara()`. A plain link to the real GitHub project still sits at the bottom, for anyone who wants to actually contribute a place, creature, or tale — the in-pane page is a preview, not a replacement for the workshop itself.
 
+The whole page's own background tints to a pastel of whichever square is showing (`pastel()` blends the square's hex 78% toward white, in JS — no second palette to keep in sync by hand). Because that means the page is always a *light* background, its heading/subnote/index text are hardcoded dark tones rather than the pane's usual light `--ink`/`--dim` — the one part of the pane that isn't dark-themed on purpose.
+
 Adding an eleventh color (or turning a placeholder into a real painted square) means editing the `PANDARA_COLORS` array in the script — one entry per square, same pattern as `BOOKS` for the library.

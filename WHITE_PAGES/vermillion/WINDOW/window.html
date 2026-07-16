@@ -264,8 +264,23 @@
   footer { margin-top: 1.2em; color: var(--dim); font-size: .76rem; text-align: center; }
   a { color: var(--emerald); text-decoration: none; }
 
-  /* ── page two: Pandara — ten placeholder squares, one per dragon-color ── */
-  #page-pandara { padding-top: .2em; }
+  /* ── page two: Pandara — ten placeholder squares, one per dragon-color ──
+     the page's own background pastels to match whichever square is showing
+     (set in JS, renderPandaraSquare() -> pastel()); the negative-margin/
+     padding pair bleeds that tint out to the body's own edge, so it reads
+     as the room's color, not a swatch floating in a dark box. Every text
+     color below is chosen for a LIGHT background on purpose — unlike the
+     rest of the pane, this page is never dark. */
+  #page-pandara {
+    margin: -1.1em -1.1em 0; padding: 1.3em 1.1em 1.6em; border-radius: 0 0 14px 14px;
+    transition: background .35s;
+  }
+  #page-pandara h2 {
+    font-size: .74rem; letter-spacing: .13em; text-transform: uppercase;
+    font-weight: normal; margin-bottom: .2em; color: #4a3d28;
+  }
+  #page-pandara h2 .handset { color: #6b4a2a; text-transform: none; letter-spacing: 0; font-size: .66rem; font-style: italic; }
+  #page-pandara .subnote { color: #5a4a35; }
   #pandara-back {
     display: inline-block; margin-bottom: .9em; padding: .4em .8em;
     background: #1a1e14; border: 1px solid var(--line); color: var(--ink);
@@ -289,8 +304,9 @@
     font-family: Georgia, serif; font-size: 1.15rem; letter-spacing: .06em;
     text-transform: uppercase; box-shadow: 0 0 0 1px #ffffff22 inset, 0 6px 18px #00000066;
   }
-  #pandara-index { text-align: center; color: var(--dim); font-size: .8rem; }
+  #pandara-index { text-align: center; color: #5a4a35; font-size: .8rem; }
   .pandara-outlink { text-align: center; margin-top: 1.3em; }
+  .pandara-outlink a { color: #1f6b4a; text-decoration: underline; text-decoration-style: dotted; }
 </style>
 </head>
 <body>
@@ -537,6 +553,19 @@ var PANDARA_COLORS = [
 ];
 var pandaraIdx = 0;
 
+// blends a hex color toward white -- always light, regardless of the source
+// hue, so the page tint stays a true pastel and the dark text set in CSS
+// (#page-pandara is styled for a light background) stays readable no matter
+// which square is showing.
+function pastel(hex) {
+  var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  var mix = 0.78;
+  r = Math.round(r * (1 - mix) + 255 * mix);
+  g = Math.round(g * (1 - mix) + 255 * mix);
+  b = Math.round(b * (1 - mix) + 255 * mix);
+  return "rgb(" + r + "," + g + "," + b + ")";
+}
+
 function renderPandaraSquare() {
   var c = PANDARA_COLORS[pandaraIdx];
   var sq = document.getElementById("pandara-square");
@@ -544,6 +573,7 @@ function renderPandaraSquare() {
   sq.style.color = c.dark ? "#241f1a" : "#f0e6d8";
   sq.textContent = c.name;
   document.getElementById("pandara-index").textContent = (pandaraIdx + 1) + " / " + PANDARA_COLORS.length;
+  document.getElementById("page-pandara").style.background = pastel(c.hex);
 }
 
 function pandaraCycle(dir) {
