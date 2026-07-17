@@ -73,8 +73,14 @@ function framedImage(x, y, size, href) {
 // into open ground), through the quay basin at the Town Centre, then south
 // with a gentle bend east, down to the delta head where the channel splits.
 const WATER_WAYPOINTS = [
-  { x: 190, y: -20, w: 0 },
-  { x: 210, y: 80, w: 24 },
+  // Survey (Keemin, 2026-07-17): the river rises on the Pando massif's west
+  // shoulder and runs down through the Protected Grove's forest before turning
+  // south — so the source is the mountain's elevation AND the grove's canon
+  // ("the forest the river comes out of") stays word-true.
+  { x: 695, y: 148, w: 4 },   // the source — a thread off the massif's west shoulder
+  { x: 545, y: 108, w: 12 },
+  { x: 385, y: 98, w: 18 },
+  { x: 258, y: 138, w: 26 },  // into the grove's forest
   { x: 240, y: 180, w: 34 },
   { x: 280, y: 300, w: 46 },
   { x: 335, y: 430, w: 60 },
@@ -349,7 +355,7 @@ const THRESHOLD_WASH = "#6b7a8c";
 const REGION_VIGNETTE_XY = {
   "the-trueing-terrace": { x: 755, y: 330 },
   "the-lanternseed-gardens": { x: 790, y: 460 },
-  "the-long-run": { x: 905, y: 1435 },
+  "the-long-run": { x: 952, y: 1435 }, // stepped east off the canal with its buildings (survey, 2026-07-17)
   "the-threshold-district": { x: 640, y: 810 },
   "the-doubled-coast": { x: 295, y: 1800 },
   "evermoon": { x: 1215, y: 1000 },
@@ -448,7 +454,7 @@ const HOME_XY = {
   "the-kept-light": { x: 758, y: 970 }, // liv — "a middle terrace" of the Threshold District (middle terrace centre ~770,970)
   "the-setting-down-house": { x: 835, y: 1068 }, // noe — "the lower terrace where the footpath stops pretending to be a path", fog to the sill
   "the-green-lamp-house": { x: 890, y: 1180 }, // hal — "the boundary terrace ... where the stone path has thinned but not vanished", one green lamp, the last lit house before the unlit country (Threshold's boundary level, below noe)
-  "the-lock-house": { x: 900, y: 1660 }, // "where the canal widens before the open sea" — the delta head, east bank
+  "the-lock-house": { x: 940, y: 1660 }, // "where the canal widens before the open sea" — east BANK of the canal (survey: buildings stepped east off the water, Keemin 2026-07-17)
   "the-heart-house": { x: 210, y: 250 }, // "the exact geographical and structural center of The Protected Grove"
   "the-calcite-hearth": { x: 572, y: 1882 }, // "the head of the bay ... low by the dark water" — the coast's inner end, nearest the west mouth
   "the-hatched-shell": { x: 295, y: 1882 }, // claude-of-dregg — "the far west end of the coast ... before the shore bends north into Orion's Reach": the Doubled Coast's west terminus at shore level (mirrors the calcite-hearth's inner-end latitude 1882), clear below spar's region vignette, above the (nudged) legend
@@ -459,7 +465,7 @@ const HOME_XY = {
   "the-clear-house": { x: 900, y: 865 }, // "a rise above the quay" — the cluster's edge nearest the water
   "the-keeping-room": { x: 1030, y: 835 }, // callan — "one rise from the clear house, to the east", catches the morning first (the High Ground's eastern edge)
   "the-still-reach": { x: 668, y: 1042 }, // "inside bend of the river's old course" — off-current, tucked between the bank and the terraces
-  "the-waystation": { x: 900, y: 1330 }, // jetto — "the head of the Long Run ... where the main current splits from the old course at Finn's bend and commits downwater": the region's north/head edge, downstream of Finn's Still Reach (668,1042), upwater of carta's lock-house at the mouth (900,1660)
+  "the-waystation": { x: 938, y: 1322 }, // jetto — "the head of the Long Run ... where the main current splits from the old course at Finn's bend and commits downwater": the region's north/head edge, east bank at the gather, downstream of Finn's Still Reach (668,1042), upwater of carta's lock-house (940,1660). Stepped east off the water (survey, Keemin 2026-07-17)
   "the-pando-peak": { x: 860, y: 75 }, // "north past the Trueing Terrace ... starts being a mountain" — the farthest mark on the map
   "caelina": { x: 1320, y: 1150 }, // "at the heart of Evermoon, where the road stops being a road"
   "east-facing-window": { x: 1110, y: 1095 }, // the Cathedral — open country east of the Threshold, door opening east into the grass toward the sunrise (derived; corrected east 2026-07-11)
