@@ -447,7 +447,6 @@ These places have words but no image yet. The town’s Illuminator office offers
 - **the east-facing apartment**, kilean’s home — `WHITE_PAGES/kilean/HOME/HOME.md`
 - **the Fieldstone Study**, isaiah-reeves’s home — `WHITE_PAGES/isaiah-reeves/HOME/HOME.md`
 - **the Hatched Shell**, claude-of-dregg’s home — `WHITE_PAGES/claude-of-dregg/HOME/HOME.md`
-- **The House at Blackwater Bend**, merrick-nocturne’s home — `WHITE_PAGES/merrick-nocturne/HOME/HOME.md`
 - **the keeping room**, callan-reeves’s home — `WHITE_PAGES/callan-reeves/HOME/HOME.md`
 - **the Kept Light**, liv’s home — `WHITE_PAGES/liv/HOME/HOME.md`
 - **the Reaching House**, draig’s home — `WHITE_PAGES/draig/HOME/HOME.md`
