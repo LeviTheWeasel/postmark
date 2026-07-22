@@ -20,7 +20,9 @@ const town = JSON.parse(readFileSync(join(HERE, "town.json"), "utf8"));
 // Canvas dimensions — expanded 2026-07-04 (principal-directed) from 1200x1600:
 // the town outgrew the first sheet, and the mouth earned a real delta.
 const MAP_W = 1500;
-const MAP_H = 2100;
+const MAP_H = 2400;
+const SEA_FADE_Y = 1750;   // where the water starts fading in
+const SEA_SOLID_Y = 1870;  // and where it goes solid  // sea extended +300 (Keemin, 2026-07-21) to seat the boards along the foot
 
 // ---------------------------------------------------------------- utilities
 
@@ -79,35 +81,81 @@ function framedImage(x, y, size, href) {
 // town side, where the Centre, both office homes and the mail-house row live.
 // The old course and the canal are untouched: they are separate waters, and
 // finn's Still Reach and carta's locks are written onto them.
+// ============================================================================
+// THE DRAWN WATER IS ILLUSTRATIVE, NOT SURVEY DATA.
+//
+// Its width is several times life-size on purpose. The ground is roughly 1px to
+// the metre — the map is about 1.5km by 2.4km, a town you can walk — but at that
+// scale a true-width river would be a thread you could not see the locks on, so
+// the water and the map furniture are drawn large enough to read.
+//
+// THEREFORE: a placement may never be derived from, or challenged by, where the
+// drawn banks fall. If a house looks like it is standing in the river, that is a
+// fact about this drawing, not about the house. The resident's own words and
+// placements.json are the authority; this file only illustrates them.
+//
+// Written down because it is a mistake that keeps getting made — twice in two
+// days by the Illuminator, about the same house both times (Ferry's Waiting
+// Room), each time "verified" off the ribbon's edge and each time wrong.
+// ============================================================================
 const WATER_WAYPOINTS = [
   // Survey decisions 005/006 (Keemin, 2026-07-17): the river's water is
   // Pando's — but the mountain sits FAR to the northwest, off the map ("days
   // out on foot"), so the stream simply enters at the NW corner as it always
   // did, feeds the garrison lake in the Protected Grove, and the river issues
   // from the forest's edge — "the forest the river comes out of", word-true.
-  { x: 190, y: -20, w: 0 },   // Pando's water, arriving from beyond the map
-  { x: 199, y: 70, w: 12 },
-  { x: 192, y: 150, w: 15 },  // into the grove — the lake takes it here
-  { x: 222, y: 262, w: 17 },  // and the river issues from the forest
-  { x: 272, y: 300, w: 31 },
-  { x: 325, y: 430, w: 40 },
-  { x: 382, y: 560, w: 53 },
-  { x: 427, y: 670, w: 72 },
+  // The northern course, re-cut 2026-07-21 (Keemin). It used to run almost
+  // straight down the western margin; it now enters at the top-left corner,
+  // works south-east through the grove and its lake, and then holds the WESTERN
+  // curve of the Trueing Terrace and the Lanternseed Gardens all the way down
+  // to the quay — so the two northern regions sit on their own bank of a river
+  // that bends around them, instead of floating well east of the water.
+  { x: 26, y: -20, w: 40 },   // Pando's water, arriving from beyond the map
+  { x: 58, y: 62, w: 44 },
+  { x: 108, y: 132, w: 47 },
+  { x: 162, y: 178, w: 50 },  // into the grove
+  { x: 205, y: 205, w: 56 },  // the garrison lake takes it here
+  { x: 258, y: 220, w: 52 },
+  { x: 306, y: 232, w: 52 },
+  { x: 347, y: 239, w: 54 },  // and the river issues from the forest's edge
+  { x: 398, y: 268, w: 57 },
+  { x: 444, y: 322, w: 61 },
+  { x: 486, y: 386, w: 65 },
+  { x: 516, y: 452, w: 70 },  // west of the Trueing Terrace's curve
+  { x: 536, y: 522, w: 76 },
+  { x: 543, y: 585, w: 82 },  // west of the Lanternseed Gardens' curve
+  { x: 528, y: 648, w: 88 },
+  { x: 498, y: 706, w: 94 },
   { x: 460, y: 760, w: 99 }, // the quay basin — the Centre sits here
+  // 2026-07-21 (Keemin, unifying pass) — the lower river re-cut. It was WAY
+  // too wide below the quay: it grew 79 → 180 all the way down, which read as
+  // an estuary the whole length of the map. It now narrows at y878 and holds
+  // a held 70 — roughly the thickness it has at the quay's foot (≈86 at 475,825) until the
+  // mouth. Three bends against the Threshold District: toward it from y940,
+  // away at y1082, back toward it at y1300 — and that last one widens and
+  // swings hard to straighten out, then re-narrows onto its old heading.
   { x: 495, y: 860, w: 79 },
-  { x: 530, y: 970, w: 81 },
-  { x: 568, y: 1080, w: 87 },
-  { x: 611, y: 1200, w: 95 },
-  { x: 659, y: 1320, w: 105 },
-  { x: 710, y: 1440, w: 119 },
-  { x: 743, y: 1550, w: 127 },
-  { x: 771, y: 1700, w: 137 },
+  { x: 502, y: 878, w: 70 },   // the narrowing
+  { x: 530, y: 940, w: 70 },   // bending toward the Threshold
+  { x: 590, y: 1010, w: 70 },
+  { x: 645, y: 1082, w: 70 },  // and away again
+  { x: 648, y: 1180, w: 70 },
+  { x: 630, y: 1300, w: 72 },  // back toward it, off the boundary terrace's foot
+  { x: 650, y: 1372, w: 94 },  // widening into the hard bend
+  { x: 726, y: 1432, w: 110 },
+  { x: 728, y: 1550, w: 82 },  // straightened, re-narrowed, back on its old course
+  // THE CANAL RUN: dead straight between the two locks (x pinned to 725, width
+  // held at 72). A worked cut behaves like a worked cut — the wobble filter
+  // still gives it a drawn edge, but the course itself does not wander.
+  { x: 725, y: 1640, w: 74 },  // the first lock
+  { x: 725, y: 1720, w: 72 },
+  { x: 725, y: 1790, w: 72 },
+  { x: 725, y: 1850, w: 72 },  // the last lock, at carta's house
   // CANDIDATE A / decision 004: the delta is retired — the corpus is unanimous
   // on a single "the mouth" (carta, jetto, spar ×3), and the delta was a
   // mislabeled founder ask to begin with. One river, one mouth, the sea past it.
-  { x: 790, y: 1810, w: 150 },
-  { x: 807, y: 1910, w: 163 }, // the mouth — where the heading is committed
-  { x: 815, y: 2020, w: 180 },
+  { x: 725, y: 1920, w: 94 },  // the mouth — where the heading is committed
+  { x: 725, y: 1990, w: 110 }, // opening into the sea
 ];
 // The delta: the one river opens to the sea in three mouths. Each distributary
 // is its own ribbon, branching inside the main channel's end so the join hides
@@ -117,32 +165,42 @@ const WATER_WAYPOINTS = [
 // so every consumer of the shape keeps working; the single-mouth continuation
 // now lives at the end of WATER_WAYPOINTS above.
 const DELTA_DISTRIBUTARIES = [];
-// CANDIDATE A (the Land Survey, 2026-07-17) — the resident-defined river,
-// ratified by Keemin from the claims table: the water finally agrees with its
-// own labels. finn: "the inside bend of the river's old course, past where
-// the main current split off ... a reach that chose its own pace." jetto's
-// placement: "where the main current splits from the old course at Finn's
-// bend ... upwater of the lock-house." carta: "downcanal from the Town
-// Centre ... the last lock and the mouth."
-const OLD_COURSE = [
-  { x: 560, y: 992, w: 36 },   // Finn's bend — where the main current split off
-  { x: 630, y: 1008, w: 30 },
-  { x: 690, y: 1048, w: 30 },  // the bend's apex — the Still Reach sits INSIDE it, on the west bank
-  { x: 736, y: 1116, w: 36 },  // still water, bowing east — its own pace
-  { x: 778, y: 1196, w: 36 },
-  { x: 826, y: 1268, w: 36 },
-  { x: 900, y: 1330, w: 42 },  // gathers at the head of the Long Run
+// 2026-07-21 (Keemin, unifying pass): the OLD_COURSE side-channel and the
+// separate THE_CANAL are removed. One water serves the town — the river is
+// the canal is the harbor, at different reaches. The locks came out with the
+// canal they were drawn across; they go back on the main channel when the
+// lower run is redrawn.
+// The still water east of the broad bend (Keemin, 2026-07-21). Not a channel —
+// a dead arm. The river swells and slows through the bend, and the reach that
+// used to carry on eastward was left behind when the main current straightened
+// south. It gets NO flow highlight, because nothing in it moves. This is
+// finn's sentence drawn: "the place where the main current split off, and what
+// was left settled into still water."
+// finn's water. Still, but never cut off: "the main current split off, and what
+// was left SETTLED." It leaves the river tangentially at the swell's shoulder,
+// then bends around the Still Reach — so finn stands on the INSIDE of the bend,
+// which is his own sentence — and SETTLES INTO A POOL southeast of him.
+//
+// It used to taper to a 5px point, which drew a dagger lying in open ground: a
+// spike is what a channel does when the drawing runs out, not what still water
+// does when it stops. Cut-off reaches end in a pool — they slow, they widen,
+// and they sit. So the last three waypoints now open out instead of closing
+// down, and the ribbon takes a round cap (see ribbonPath's roundEnd). His own
+// sentence ends on "settled into still water", and the drawing now ends there
+// too. No ghost banks: the pool alone says the rest of that course is gone.
+const STILL_REACH = [
+  { x: 732, y: 1432, w: 60 },  // still joined to the river — settled, not severed
+  { x: 768, y: 1476, w: 56 },
+  { x: 832, y: 1500, w: 52 },
+  { x: 878, y: 1532, w: 46 },  // rounding past the house's shoulder
+  { x: 891, y: 1567, w: 38 },  // the bend — finn on its inside
+  { x: 884, y: 1592, w: 34 },  // and back, the tight turn
+  { x: 906, y: 1617, w: 38 },  // slowing
+  { x: 934, y: 1636, w: 44 },  // widening as it slows
+  { x: 958, y: 1648, w: 48 },  // and stops — round-capped, a pool, not a point
 ];
-const THE_CANAL = [
-  { x: 900, y: 1330, w: 52 },  // the Waystation sits at the head
-  { x: 902, y: 1420, w: 52 },
-  { x: 900, y: 1510, w: 54 },  // a lock
-  { x: 898, y: 1592, w: 54 },
-  { x: 900, y: 1660, w: 56 },  // the lock-house — the last lock
-  { x: 896, y: 1760, w: 58 },
-  { x: 872, y: 1850, w: 62 },  // merges into the main channel just above the mouth
-];
-const LOCKS = [ { x: 900, y: 1510, w: 54 }, { x: 900, y: 1660, w: 56 } ];
+// the first lock, where the straightened current is put to work
+const LOCKS = [ { x: 725, y: 1640, w: 74 }, { x: 725, y: 1850, w: 72 } ];
 const CENTRE_XY = { x: 485, y: 760 };
 
 // smoothed path commands through pts, WITHOUT a leading M — for appending
@@ -165,7 +223,11 @@ function smoothPath(pts) {
   return `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)} ` + smoothSegment(pts.slice(1));
 }
 
-function ribbonPath(waypoints) {
+// roundEnd: close the far end with a semicircular cap instead of cutting
+// straight across it. A flat cap on a wide terminus reads as a channel someone
+// sawed off; a taper to nothing reads as a spike. Water that simply stops —
+// finn's Still Reach — wants neither, so it gets a proper round end.
+function ribbonPath(waypoints, { roundEnd = false } = {}) {
   const left = [], right = [];
   for (let i = 0; i < waypoints.length; i++) {
     const p = waypoints[i];
@@ -179,6 +241,17 @@ function ribbonPath(waypoints) {
     right.push({ x: p.x - nx * w, y: p.y - ny * w });
   }
   const rightRev = right.slice().reverse();
+  if (roundEnd) {
+    // arc from the last left point round to the last right point. The sweep is
+    // 0 so the bulge falls FORWARD, in the direction of travel, rather than
+    // biting back into the ribbon.
+    const r = (waypoints[waypoints.length - 1].w / 2).toFixed(1);
+    return `M${left[0].x.toFixed(1)},${left[0].y.toFixed(1)} ` +
+      smoothSegment(left.slice(1)) +
+      `A${r},${r} 0 0,0 ${rightRev[0].x.toFixed(1)},${rightRev[0].y.toFixed(1)} ` +
+      smoothSegment(rightRev.slice(1)) +
+      "Z";
+  }
   return `M${left[0].x.toFixed(1)},${left[0].y.toFixed(1)} ` +
     smoothSegment(left.slice(1)) +
     smoothSegment(rightRev) +
@@ -188,9 +261,12 @@ function ribbonPath(waypoints) {
 function renderWater() {
   const path = ribbonPath(WATER_WAYPOINTS);
   // one ribbon per channel: the river down to the delta head, then each mouth
-  // — plus the old course and the canal (Candidate A: the resident-defined
-  // river; the old course gets NO flow highlight, because it is still water)
-  const channels = [path, ribbonPath(OLD_COURSE), ribbonPath(THE_CANAL), ...DELTA_DISTRIBUTARIES.map((d) => ribbonPath(d))];
+  const channels = [path, ...DELTA_DISTRIBUTARIES.map((d) => ribbonPath(d))];
+  // the still reach: water, but no flow highlight — nothing in it moves
+  const stillD = ribbonPath(STILL_REACH, { roundEnd: true });
+  const pond = `
+    <path d="${stillD}" fill="url(#waterGrad)" filter="url(#waterWobble)"/>
+    <path d="${stillD}" fill="none" stroke="#3d5f7a" stroke-width="1.2" opacity="0.45" filter="url(#waterWobble)"/>`;
   const body = channels.map((d) => `
     <path d="${d}" fill="url(#waterGrad)" filter="url(#waterWobble)"/>
     <!-- a lighter bank edge, so the water reads as water under lamplight, not a fissure -->
@@ -201,8 +277,9 @@ function renderWater() {
     <path d="${ribbonPath(pts.map((p) => ({ ...p, w: p.w * 0.35 })))}" fill="none" stroke="#4d7192" stroke-width="1.6" opacity="0.3" filter="url(#waterWobble)"/>`).join("");
   // the sea, open beyond the mouths — a wash across the bottom, fading up,
   // with solid water along the map's foot so the mouths visibly open into it
-  const sea = `<rect x="0" y="1900" width="${MAP_W}" height="${MAP_H - 1900}" fill="url(#seaFade)"/>
-    <rect x="0" y="2020" width="${MAP_W}" height="${MAP_H - 2020}" fill="#122943" opacity="0.85"/>`;
+  // the sea itself is no longer drawn here — it is one shape behind the whole
+  // map now, see COASTLINE / renderSea()
+  const sea = "";
   // the locks: paired timber gates drawn across the canal (Candidate A)
   const lockMarks = LOCKS.map((l) => {
     const half = l.w / 2 + 4;
@@ -214,6 +291,7 @@ function renderWater() {
   <g id="the-water">
     ${body}
     ${highlights}
+    ${pond}
     ${lockMarks}
     ${sea}
     <!-- lamplight reflected on the quay basin -->
@@ -232,12 +310,7 @@ function renderTerrainGround() {
   if (!TERRAIN) return "";
   let out = "";
   // the west sea — the shore bending north into Orion's Reach
-  if (TERRAIN.west_sea) {
-    const p = TERRAIN.west_sea.poly;
-    const d = smoothPath(p) + ` L-5,${p[p.length - 1].y} Z`;
-    out += `<path d="${d}" fill="url(#waterGrad)" opacity="0.9" filter="url(#waterWobble)"/>
-      <path d="${smoothPath(p)}" fill="none" stroke="#3d5f7a" stroke-width="1.2" opacity="0.4" filter="url(#waterWobble)"/>`;
-  }
+  out += westSeaShape();
   // lakes
   for (const l of TERRAIN.lakes || []) {
     out += `<ellipse cx="${l.cx}" cy="${l.cy}" rx="${l.rx}" ry="${l.ry}" fill="url(#waterGrad)" opacity="0.92" filter="url(#waterWobble)"/>
@@ -293,18 +366,123 @@ function renderTerrainZones() {
   return `<g id="terrain-zones">${out}</g>`;
 }
 
-// The survey channels are narrow enough that the region washes (drawn after
-// the water) mute them into the ground — the main river survives only by
-// being five times wider. Re-assert them above the washes at partial opacity,
-// so they read as water seen through the wash, the way layered paint would.
+// Re-asserted 2026-07-21: the Long Run's wash now covers the canal run and the
+// mouth, and a region wash laid over water turns it to pale ground — the canal
+// simply vanished under carta's own region. So the worked run (last lock-line
+// down to the sea) is redrawn ABOVE the washes at partial opacity, reading as
+// water seen through the wash the way layered paint would. The gates stay in
+// the base layer; only the channel is re-asserted.
 function renderSurveyChannelsOverlay() {
+  const canal = WATER_WAYPOINTS.slice(-7);
+  const d = ribbonPath(canal);
+  // the gates come up here too, and darker: drawn in the base layer they sat
+  // under carta's wash and blurred out, and a lock is the one piece of built
+  // work on this water — it should read as timber, not as a smudge.
+  const gates = LOCKS.map((l) => {
+    const half = l.w / 2 + 6;
+    return `
+    <line x1="${l.x - half}" y1="${l.y - 5}" x2="${l.x + half}" y2="${l.y - 5}" stroke="#4a3618" stroke-width="3.2"/>
+    <line x1="${l.x - half}" y1="${l.y + 5}" x2="${l.x + half}" y2="${l.y + 5}" stroke="#4a3618" stroke-width="3.2"/>`;
+  }).join("");
   return `
   <g id="the-water-survey-overlay">
-    ${[OLD_COURSE, THE_CANAL].map((ch) => `
-    <path d="${ribbonPath(ch)}" fill="url(#waterGrad)" opacity="0.85" filter="url(#waterWobble)"/>
-    <path d="${ribbonPath(ch)}" fill="none" stroke="#3d5f7a" stroke-width="1.2" opacity="0.55" filter="url(#waterWobble)"/>`).join("")}
+    <path d="${d}" fill="url(#waterGrad)" opacity="0.85" filter="url(#waterWobble)"/>
+    <path d="${d}" fill="none" stroke="#3d5f7a" stroke-width="1.2" opacity="0.55" filter="url(#waterWobble)"/>
+    ${gates}
   </g>`;
 }
+
+// A wedge of sea cut back INTO the land at the south-west, drawn over the
+// region washes to round out the western shore (Keemin, 2026-07-21). It has to
+// come after the regions, because what it's correcting is wash spilling past
+// the waterline — so it re-lays the exact same two sea layers, clipped to the
+// wedge, and the colour matches the open water by construction rather than by
+// a hand-picked hex that would drift the next time the sea changes.
+// Everything SOUTH and WEST of the named shoreline is open water, out to the
+// map's own edges — which is what joins the western sea to the southern one
+// instead of leaving a tongue of land between them.
+// The western sea, as its own shape so it can be drawn twice: once with the
+// terrain, and again on top of the shore cut's paper-blanking, which would
+// otherwise erase the very water the cut is meant to join up with. Sea palette,
+// not river palette — this is the same body as the southern sea, and waterGrad
+// made it read as a pale inlet butting against a dark ocean.
+// RETIRED as a separate shape 2026-07-21. Its water is now the northern half of
+// COASTLINE — one shore and one sea instead of a west-sea blob meeting a rectangular
+// band at a corner. The terrain record and its receipt stay in
+// terrain-candidate-A.json; only the drawing moved.
+function westSeaShape() {
+  return "";
+}
+
+// THE COASTLINE. One path, west edge to east edge, and everything south of it
+// is sea. This replaces what used to be three separate things that had to be
+// kept agreeing with each other by hand — a west_sea blob, a rectangular
+// southern sea, and a bay cut in afterwards. There is now one shore and one
+// body of water, so the map cannot develop a seam between them.
+//
+// Read west to east: in off the west edge, south-east down the coast, WEST
+// around the Still-Here Light so orion's tower stands on a headland with water
+// on three sides ("a white tower on a basalt headland"), out to the mouth of
+// the Doubled Coast's bay, north up its western arm past the Hatched Shell,
+// round the head under the Calcite Hearth, back down the eastern arm and
+// TAPERING out past the Dreamer's Anchor rather than ending on a point, then
+// east along the southern shore, wandering, to the far edge.
+const COASTLINE = [
+  { x: -5, y: 1400 },
+  { x: 58, y: 1452 }, { x: 96, y: 1516 },    // in off the west edge
+  { x: 104, y: 1578 }, { x: 136, y: 1632 },  // the shore running south-east
+  { x: 152, y: 1670 },                       // the headland's northern shoulder
+  { x: 122, y: 1706 }, { x: 98, y: 1736 },   // bending west around orion's light
+  { x: 114, y: 1772 },                       // and back off the point
+  { x: 158, y: 1800 }, { x: 206, y: 1826 },
+  { x: 244, y: 1856 }, { x: 274, y: 1892 },  // down to the bay's western horn
+  // --- into the bay: north up the western arm, dregg's ground on its shore
+  { x: 300, y: 1872 }, { x: 308, y: 1812 },
+  { x: 311, y: 1756 }, { x: 312, y: 1708 },  // the aggressive northward cut
+  { x: 352, y: 1682 }, { x: 410, y: 1670 },  // rounding out
+  { x: 460, y: 1677 },                       // the head, the Calcite Hearth above it
+  { x: 496, y: 1706 }, { x: 512, y: 1752 },  // and back down the eastern arm
+  { x: 500, y: 1798 }, { x: 470, y: 1838 },
+  { x: 462, y: 1872 }, { x: 478, y: 1900 },  // easing out past gael, not a point
+  { x: 524, y: 1912 },                       // --- and away into the open sea
+  // --- the southern shore: wandering, never ruled
+  { x: 582, y: 1894 }, { x: 646, y: 1908 }, { x: 706, y: 1888 },
+  { x: 768, y: 1902 }, { x: 832, y: 1882 }, { x: 896, y: 1898 },
+  { x: 958, y: 1876 }, { x: 1022, y: 1894 }, { x: 1086, y: 1872 },
+  { x: 1150, y: 1890 }, { x: 1216, y: 1868 }, { x: 1282, y: 1886 },
+  { x: 1348, y: 1866 }, { x: 1414, y: 1884 }, { x: 1505, y: 1870 },
+];
+// One fill for every piece of sea that has to be cut into drawn ground. Paper
+// FIRST to blank whatever is underneath (the sea layers are semi-transparent,
+// so painting them over a region wash tints the water a different blue from the
+// open sea), then the SAME two layers the open sea is made of, at the SAME
+// geometry — so the colour matches by construction rather than by a hand-picked
+// hex that would drift the next time the sea moves. The fade keeps its original
+// span, because it is depth and depth is measured from the southern waterline;
+// only the solid is carried up, since these are sea rather than shallows.
+function seaFill(id, d, coastLine) {
+  return `
+  <g id="${id}">
+    <clipPath id="${id}-clip"><path d="${d}"/></clipPath>
+    <g clip-path="url(#${id}-clip)">
+      <rect x="-5" y="0" width="${MAP_W}" height="${MAP_H}" class="bg-grain"/>
+      <!-- the grain too: the map lays paper THEN grain, and blanking to bare
+           paper leaves this water half a tone off the water beside it — which
+           shows up as a faint rectangle wherever one of these shapes overlaps
+           open sea. Same two rects, same order, no seam. -->
+      <rect x="-5" y="0" width="${MAP_W}" height="${MAP_H}" filter="url(#paperGrain)"/>
+      <rect x="-5" y="${SEA_FADE_Y}" width="${MAP_W}" height="${MAP_H - SEA_FADE_Y}" fill="url(#seaFade)"/>
+      <rect x="-5" y="0" width="${MAP_W}" height="${MAP_H}" fill="#122943" opacity="0.85"/>
+    </g>
+    <path d="${coastLine}" fill="none" stroke="#3d5f7a" stroke-width="1.2" opacity="0.45" filter="url(#waterWobble)"/>
+  </g>`;
+}
+
+function renderSea() {
+  const coast = smoothPath(COASTLINE);
+  return seaFill("the-sea", coast + ` L${MAP_W + 5},${MAP_H} L-5,${MAP_H} Z`, coast);
+}
+
 
 // -------------------------------------------------------- region blobs
 
@@ -366,7 +544,7 @@ const REGION_LAYOUT = {
   // is for the two of THEM to settle — it is the roster-ring question already open
   // with Wright (flagged 2026-07-15). His region: the-long-run declaration is his
   // own and stays untouched; only the geometry follows the founder's text.
-  "the-long-run": { cx: 890, cy: 1750, rx: 100, ry: 145, wash: "#a8895a", label: { x: 1000, y: 1590 } },
+  "the-long-run": { cx: 750, cy: 1790, rx: 92, ry: 190, wash: "#a8895a", label: { x: 900, y: 1700 }, hit: { x: 654, y: 1596, w: 192, h: 388 } },
   // the first west-bank settlement — the forest the river comes out of
   // (placements.json: derived, adjudicated; no textual anchor in the text)
   "the-protected-grove": { cx: 210, cy: 235, rx: 135, ry: 112, wash: "#4a7d5f", label: { x: 210, y: 118 } },
@@ -378,13 +556,15 @@ const REGION_LAYOUT = {
   // belong to. Now 0.71 and 0.37. dregg's Hatched Shell stays inside (0.75), and
   // orion's Still-Here Light stays OUT on purpose — that one is the Reach's, not
   // spar's. Label follows the centre east.
-  "the-doubled-coast": { cx: 460, cy: 1900, rx: 195, ry: 95, wash: "#8f7a9c", label: { x: 460, y: 1790 } },
+  "the-doubled-coast": { cx: 405, cy: 1740, rx: 175, ry: 150, wash: "#8f7a9c", label: { x: 392, y: 1566 } },
   // the coast east of the east mouth — the ground the open-ground fact held
   // open after spar took the west; sun-gold wash
-  "aelyria": { cx: 1220, cy: 1900, rx: 150, ry: 95, wash: "#b3985c", label: { x: 1220, y: 1770 } },
+  "aelyria": { cx: 1220, cy: 1750, rx: 150, ry: 95, wash: "#b3985c", label: { x: 1220, y: 1620 } },
   // the western seaboard past the Doubled Coast, bending north into the fog —
   // a long coastal band up the far west edge
-  "the-reach": { cx: 140, cy: 1655, rx: 115, ry: 235, wash: "#5f7a72", label: { x: 175, y: 1400 } }, // shifted SW 2026-07-11 to hug the sea — a coastal region whose seaward headland (the Still-Here Light) sits at the water, past the Doubled Coast where the shore turns north
+  // the-reach is NOT here — it renders as a chain of coastal lobes below
+  // (REACH_LOBES), because one ellipse wide enough to hold its length also ran
+  // ~150px inland of a coast that is the whole point of the region
   // the east rise above the river's bend — the Reeves household's founding;
   // fieldstone wash, above the fog line
   "the-high-ground": { cx: 1000, cy: 800, rx: 150, ry: 125, wash: "#9c9178", label: { x: 1000, y: 650 } },
@@ -423,10 +603,12 @@ const REGION_LAYOUT = {
 // the Threshold District renders as four descending terrace steps, not one blob,
 // hugging the water's eastern bank as it bends south
 const THRESHOLD_TERRACES = [
-  { id: "upper", cx: 720, cy: 860, rx: 110, ry: 65, fog: false },
-  { id: "middle", cx: 770, cy: 970, rx: 120, ry: 68, fog: false },
-  { id: "lower", cx: 825, cy: 1080, rx: 130, ry: 72, fog: true },
-  { id: "boundary", cx: 870, cy: 1190, rx: 125, ry: 70, fog: true },
+  // down-shifted +94 on 2026-07-21 (Keemin, unifying pass): the district now
+  // STARTS at y889 — the upper terrace's top edge — instead of y795.
+  { id: "upper", cx: 720, cy: 954, rx: 110, ry: 65, fog: false },
+  { id: "middle", cx: 770, cy: 1064, rx: 120, ry: 68, fog: false },
+  { id: "lower", cx: 825, cy: 1174, rx: 130, ry: 72, fog: true },
+  { id: "boundary", cx: 800, cy: 1284, rx: 125, ry: 70, fog: true },
 ];
 const THRESHOLD_WASH = "#6b7a8c";
 
@@ -452,7 +634,114 @@ const THRESHOLD_WASH = "#6b7a8c";
 // old y812 edge. A region that doesn't contain the houses it claims is just a
 // smudge — and Ferry's fact says the-town-centre, so the drawing should say it too.
 // Still stops short of the far-bank legend and the pigeonhole card.
-const TOWN_CENTRE_SHAPE = { cx: 500, cy: 755, rx: 180, ry: 110 };
+// The Reach — ONE band cut from the coastline itself (2026-07-21, second pass).
+// orion's region is a coast: "long dark miles of it between the few lights",
+// the shore bending north past the Doubled Coast. A single ellipse long enough
+// to say "miles" was necessarily wide enough to push ~150px inland, claiming
+// ground the region was never about — so the first fix drew it as five
+// overlapping lobes, the same machinery as the Threshold's terraces.
+//
+// That fix had two faults the render showed plainly. Each lobe carried its own
+// outline stroke and its own semi-transparent fill, so the region read as a
+// stack of circles with visible seams where they crossed and darker patches
+// where the fills doubled up — five things, not one place. And because the
+// lobes were placed by hand against a coastline that had just been redrawn,
+// the northern one floated out over open water.
+//
+// Both faults have the same root: the shape was authored INDEPENDENTLY of the
+// shore it is meant to describe. So it isn't authored any more — it is derived.
+// The band is offset from COASTLINE itself, which makes drifting off the coast
+// structurally impossible: if the shore is ever redrawn again, the Reach
+// follows it with no hand-editing at all. One shape, one stroke, one fill.
+// The span is given by INDEX into COASTLINE, not by a latitude window. The
+// coast is not a function of y — it doubles back hard at the headland and again
+// all the way round the Doubled Coast's bay — so a y-range slice quietly picked
+// up both arms of spar's bay and swept the Reach 400px east over her ground.
+// Index says what the coastline's own narrative says: the Reach holds the shore
+// from the west edge down to the mouth of the bay, and hands off there.
+const REACH_COAST = { first: 0, last: 10 };  // west edge → just short of the bay's horn
+const REACH_INSET = 12;    // clear of the waterline, so the wash never floats on sea
+const REACH_DEPTH = 104;   // how far inland the strip reaches at its deepest
+const REACH_WASH = "#5f7a72";
+
+// A closed strip lying inland of a shore. Inland is (dy,-dx) — the coast is
+// written west-to-east down the map, so that normal points away from the water.
+//
+// The tangent is taken across a ±2 window rather than ±1. At the headland the
+// shore turns through nearly 180° in three points, and a ±1 tangent swings the
+// normal with it, throwing the outer edge back across the band and leaving a
+// visible crossing line through the wash. Looking further along either side
+// gives the strip the direction of the COAST rather than of one kink in it.
+//
+// Depth is jittered per point for the same reason washBlob jitters its radius —
+// a mechanically parallel edge reads as a road, not as ground — and eased to a
+// quarter at the southern end so the band closes into the shore instead of
+// being cut off square against spar's boundary.
+function coastBand(coast, inset, depth, seed) {
+  const inner = [], outer = [];
+  const n = coast.length;
+  for (let i = 0; i < n; i++) {
+    const p = coast[i];
+    const prev = coast[Math.max(0, i - 2)];
+    const next = coast[Math.min(n - 1, i + 2)];
+    let dx = next.x - prev.x, dy = next.y - prev.y;
+    const len = Math.hypot(dx, dy) || 1;
+    dx /= len; dy /= len;
+    const nx = dy, ny = -dx;
+    // ease out over the last three points; the northern end runs off the map
+    // edge and wants no taper at all.
+    const fromEnd = n - 1 - i;
+    const ease = fromEnd >= 3 ? 1 : 0.25 + 0.25 * fromEnd;
+    const d = depth * ease * (1 + jitter(seed, "d" + i) * 0.18);
+    inner.push({ x: p.x + nx * inset, y: p.y + ny * inset });
+    outer.push({ x: p.x + nx * (inset + d), y: p.y + ny * (inset + d) });
+  }
+  return `M${inner[0].x.toFixed(1)},${inner[0].y.toFixed(1)} ` +
+    smoothSegment(inner.slice(1)) +
+    smoothSegment(outer.slice().reverse()) +
+    "Z";
+}
+
+function reachBandPaths() {
+  const coast = COASTLINE.slice(REACH_COAST.first, REACH_COAST.last + 1);
+  return {
+    outer: coastBand(coast, REACH_INSET - 5, REACH_DEPTH + 12, "reach-outer"),
+    inner: coastBand(coast, REACH_INSET, REACH_DEPTH, "reach-inner"),
+  };
+}
+
+// A line of low hills between the Threshold District and the East Window
+// District — amber's own words for her western boundary: "a line of low hills
+// to the west", "it ends where the hills begin to rise". Drawn as rolling
+// strokes in two ranks, not as a region: this is terrain nobody founded, and
+// it is what her district ends AT.
+const WEST_HILLS = { y0: 972, y1: 1320, rows: 10 };
+function renderHills() {
+  let out = "";
+  for (let i = 0; i < WEST_HILLS.rows; i++) {
+    const t = i / (WEST_HILLS.rows - 1);
+    const y = WEST_HILLS.y0 + t * (WEST_HILLS.y1 - WEST_HILLS.y0);
+    for (let k = 0; k < 2; k++) {
+      const r = 25 + jitter("hill" + i, "r" + k) * 6;
+      const cx = 918 + k * 44 + jitter("hill" + i, "x" + k) * 9;
+      const yy = y + (k === 1 ? 13 : 0) + jitter("hill" + i, "y" + k) * 5;
+      out += `
+    <path d="M${(cx - r).toFixed(1)},${yy.toFixed(1)} q${r.toFixed(1)},${(-r * 0.66).toFixed(1)} ${(2 * r).toFixed(1)},0"
+      fill="none" stroke="#8a7a5e" stroke-width="1.3" opacity="${k === 1 ? "0.34" : "0.5"}"/>`;
+    }
+  }
+  return `<g id="west-hills">${out}</g>`;
+}
+
+// Grown NORTH and WEST 2026-07-21 (Keemin), so that (326,640) lies on the wash's
+// perimeter: (500,755 r180 x r110) -> (470,745 r200 x r150). Solved to the point
+// rather than nudged toward it. Re-checked against every constraint this shape
+// has ever been held to: both office homes still well inside (the Looking Room
+// 0.48, Ferry's Waiting Room 0.51), the far-bank legend (80,620) still clear by
+// a wide margin, the Lanternseed Gardens overlapped by ~12px of soft wash at
+// their closest latitude, and the Threshold's upper terrace met with ~6px of
+// overlap — the same "few soft pixels" this edge has always been allowed.
+const TOWN_CENTRE_SHAPE = { cx: 470, cy: 745, rx: 200, ry: 150 };
 const TOWN_CENTRE_WASH = "#c8a86a"; // lamplit amber — the Centre's own quay-stone register
 
 // hand-placed anchors for a region's own vignette, checked against the
@@ -461,12 +750,12 @@ const TOWN_CENTRE_WASH = "#c8a86a"; // lamplit amber — the Centre's own quay-s
 const REGION_VIGNETTE_XY = {
   "the-trueing-terrace": { x: 755, y: 330 },
   "the-lanternseed-gardens": { x: 870, y: 460 }, // travelled +80 east with the Gardens (2026-07-21)
-  "the-long-run": { x: 952, y: 1435 }, // stepped east off the canal with its buildings (survey, 2026-07-17)
-  "the-threshold-district": { x: 640, y: 810 },
-  "the-doubled-coast": { x: 295, y: 1800 },
+  "the-long-run": { x: 800, y: 1760 }, // stepped east off the canal with its buildings (survey, 2026-07-17)
+  "the-threshold-district": { x: 640, y: 904 },
+  "the-doubled-coast": { x: 295, y: 1650 },
   "evermoon": { x: 1215, y: 1000 },
-  "aelyria": { x: 1100, y: 1850 }, // aion-solare's REGION art (aelyria-region.png) — up-left of the region centre (1220,1900), clear of the Returning House thumb (east) and the region label (above)
-  "the-reach": { x: 52, y: 1540 }, // orion's REGION art (the-reach.jpg, the keeper's cottage) — up-left of the region centre (140,1655), clear of the label (above) and the Still-Here Light thumb (below); art hung 2026-07-12, PR merged
+  "aelyria": { x: 1100, y: 1700 }, // aion-solare's REGION art (aelyria-region.png) — up-left of the region centre (1220,1900), clear of the Returning House thumb (east) and the region label (above)
+  "the-reach": { x: 104, y: 1386 }, // orion's REGION art (the-reach.jpg, the keeper's cottage) — up-left of the region centre (140,1655), clear of the label (above) and the Still-Here Light thumb (below); art hung 2026-07-12, PR merged
 };
 const REGION_VIGNETTE_SIZE = 60;
 
@@ -498,11 +787,31 @@ function renderRegions(regionsById) {
       : "";
     out += `
   <g class="clickable region" data-id="${id}" tabindex="0" role="button" aria-label="${esc(region.name)}">
-    <rect x="${layout.label.x - 130}" y="${layout.label.y - 26}" width="260" height="55" fill="transparent" pointer-events="all"/>
+    <rect x="${layout.hit ? layout.hit.x : layout.label.x - 130}" y="${layout.hit ? layout.hit.y : layout.label.y - 26}" width="${layout.hit ? layout.hit.w : 260}" height="${layout.hit ? layout.hit.h : 55}" fill="transparent" pointer-events="all"/>
     ${regionWashLayer(id, layout.cx, layout.cy, layout.rx, layout.ry, layout.wash)}
     <text x="${layout.label.x}" y="${layout.label.y}" class="region-label" text-anchor="middle">${esc(region.name)}</text>
     <text x="${layout.label.x}" y="${layout.label.y + 18}" class="region-founder" text-anchor="middle">founded by ${esc(region.holder)}</text>
     ${vignette}
+  </g>`;
+  }
+  // the Reach — one band derived from the shore, not an inland ellipse
+  const reach = regionsById["the-reach"];
+  if (reach) {
+    const band = reachBandPaths();
+    const lobes = `
+    <path d="${band.outer}" fill="${REACH_WASH}" opacity="0.16" filter="url(#softWash)"/>
+    <path d="${band.inner}" fill="${REACH_WASH}" opacity="0.20" filter="url(#softWash)"/>
+    <path d="${band.inner}" fill="none" stroke="${REACH_WASH}" stroke-width="1" opacity="0.35"/>`;
+    const reachVignette = regionAssetIsFresh(reach) && REGION_VIGNETTE_XY["the-reach"]
+      ? framedImage(REGION_VIGNETTE_XY["the-reach"].x, REGION_VIGNETTE_XY["the-reach"].y, REGION_VIGNETTE_SIZE, fromRoot(firstAssetOnDisk(reach.assets)))
+      : "";
+    out += `
+  <g class="clickable region" data-id="the-reach" tabindex="0" role="button" aria-label="${esc(reach.name)}">
+    <rect x="30" y="1274" width="240" height="55" fill="transparent" pointer-events="all"/>
+    ${lobes}
+    <text x="150" y="1300" class="region-label" text-anchor="middle">${esc(reach.name)}</text>
+    <text x="150" y="1318" class="region-founder" text-anchor="middle">founded by ${esc(reach.holder)}</text>
+    ${reachVignette}
   </g>`;
   }
   // the Threshold District — four descending terraces, fog pooling on the lower two
@@ -527,8 +836,8 @@ function renderRegions(regionsById) {
   <g class="clickable region" data-id="the-threshold-district" tabindex="0" role="button" aria-label="${esc(threshold.name)}">
     <rect x="640" y="756" width="260" height="55" fill="transparent" pointer-events="all"/>
     ${terraces}
-    <text x="770" y="782" class="region-label" text-anchor="middle">${esc(threshold.name)}</text>
-    <text x="770" y="800" class="region-founder" text-anchor="middle">founded by ${esc(threshold.holder)}</text>
+    <text x="770" y="876" class="region-label" text-anchor="middle">${esc(threshold.name)}</text>
+    <text x="770" y="894" class="region-founder" text-anchor="middle">founded by ${esc(threshold.holder)}</text>
     ${thresholdVignette}
   </g>`;
   }
@@ -579,10 +888,10 @@ const HOME_XY = {
   "the-joinery": { x: 725, y: 352 }, // ethan-thorne — "the lower edge of the Trueing Terrace, where the makers' steps bend toward the Centre and the quay lights remain visible": lower Terrace below wright's house, facing the Centre; nudged up from the very edge (was 700,405) so its label clears rei's Lanternseed Gardens region label (670,430)
   "the-looking-room": { x: 595, y: 700 }, // the illumination office's own home — the near bank (channel spans ~x398-518 here), set back ~75px from the waterline and NE of the Centre (485,760), one floor up behind the mail-house row. Deliberately NOT on the crossing stone (the office keeps the Centre "tended, never owned") and deliberately NOT on the far bank (held-open invitation ground). Clear of the Lanternseed wash (~x625 at this latitude) and the Threshold marker (640,810).
   "the-lanternstep-house": { x: 700, y: 600 }, // rei — moved +80 east with the Lanternseed Gardens (2026-07-21). Her fact anchors her N of the Centre on the lower-slope with no fixed x, so translating her with her own region preserves the relation her text states; leaving her at 620 would have stranded her on the Gardens' new western lip.
-  "the-threshold-house": { x: 720, y: 858 },
-  "the-kept-light": { x: 758, y: 970 }, // liv — "a middle terrace" of the Threshold District (middle terrace centre ~770,970)
-  "the-setting-down-house": { x: 835, y: 1068 }, // noe — "the lower terrace where the footpath stops pretending to be a path", fog to the sill
-  "the-green-lamp-house": { x: 890, y: 1180 }, // hal — "the boundary terrace ... where the stone path has thinned but not vanished", one green lamp, the last lit house before the unlit country (Threshold's boundary level, below noe)
+  "the-threshold-house": { x: 720, y: 952 },
+  "the-kept-light": { x: 758, y: 1064 }, // liv — "a middle terrace" of the Threshold District (middle terrace centre ~770,970)
+  "the-setting-down-house": { x: 835, y: 1162 }, // noe — "the lower terrace where the footpath stops pretending to be a path", fog to the sill
+  "the-green-lamp-house": { x: 713, y: 1319 }, // hal — "the boundary terrace ... where the stone path has thinned but not vanished", one green lamp, the last lit house before the unlit country (Threshold's boundary level, below noe)
   // Ferry's own house, in his own hand: "the near bank at the crossing, one door
   // back from the crossing stone — last of the mail-houses at the downwater end
   // of the quay". Downwater is south (placements: downwater-is-south), so: just
@@ -590,21 +899,21 @@ const HOME_XY = {
   // than the crossing. DERIVED — the coordinate is mine, read off his sentence;
   // placement judgment is the Illuminator's and this is written to be trued.
   "the-waiting-room": { x: 516, y: 846 }, // postmaster — Wright's coordinate, RESTORED 2026-07-21. I briefly moved it to (625,788) believing the house stood in the river, having read the drawn channel width as literal geography. It is not: the water is rendered far wider than true scale (Keemin), so an icon overlapping the blue says nothing about which bank a house is on. With that objection withdrawn Wright's spot is also simply better — it sits AT the crossing, "one door back from the crossing stone", where my move drifted him east and away from the quay to satisfy a constraint that did not exist. Lesson kept: stylised terrain is not survey data; check the ledger and the resident's words, not the pixels, before calling a placement wrong.
-  "the-lock-house": { x: 940, y: 1660 }, // "where the canal widens before the open sea" — east BANK of the canal (survey: buildings stepped east off the water, Keemin 2026-07-17). NOTE (merge 2026-07-21): main still carried the pre-v2 value 900; the v2 terrain work moved it east onto the bank deliberately, so 940 wins and main's 900 was simply never updated.
-  "the-house-at-blackwater-bend": { x: 700, y: 1655 }, // merrick-nocturne — RESIDENT-CLAIMED (corrected 2026-07-20): WEST bank, directly across the river from the lock-house, same latitude. He confirmed by letter he meant the shore opposite the lock house; moved from the first derived east-bank guess (950,1560). Own art now renders (he switched assets: to inline form). (His constraint is west-bank + same-latitude, both still true after the lock-house stepped east to 940.)
-  "the-dreamer-s-anchor": { x: 585, y: 1952 }, // gael-renton — Doubled Coast, S of spar's calcite-hearth (572,1882) toward the sea, a little apart, near the water. Own art (exterior-sunset.jpg).
+  "the-lock-house": { x: 790, y: 1850 }, // "where the canal widens before the open sea" — east BANK of the canal (survey: buildings stepped east off the water, Keemin 2026-07-17). NOTE (merge 2026-07-21): main still carried the pre-v2 value 900; the v2 terrain work moved it east onto the bank deliberately, so 940 wins and main's 900 was simply never updated.
+  "the-house-at-blackwater-bend": { x: 616, y: 1424 }, // merrick-nocturne — RESIDENT-CLAIMED (corrected 2026-07-20): WEST bank, directly across the river from the lock-house, same latitude. He confirmed by letter he meant the shore opposite the lock house; moved from the first derived east-bank guess (950,1560). Own art now renders (he switched assets: to inline form). (His constraint is west-bank + same-latitude, both still true after the lock-house stepped east to 940.)
+  "the-dreamer-s-anchor": { x: 500, y: 1840 }, // gael-renton — Doubled Coast, S of spar's calcite-hearth (572,1882) toward the sea, a little apart, near the water. Own art (exterior-sunset.jpg).
   "the-heart-house": { x: 210, y: 250 }, // "the exact geographical and structural center of The Protected Grove"
-  "the-calcite-hearth": { x: 572, y: 1882 }, // "the head of the bay ... low by the dark water" — the coast's inner end, nearest the west mouth
-  "the-hatched-shell": { x: 295, y: 1882 }, // claude-of-dregg — "the far west end of the coast ... before the shore bends north into Orion's Reach": the Doubled Coast's west terminus at shore level (mirrors the calcite-hearth's inner-end latitude 1882), clear below spar's region vignette, above the (nudged) legend
-  "the-returning-house": { x: 1300, y: 1920 }, // "seaward edge of Aelyria ... low cliffs leaning over the water"
-  "the-still-here-light": { x: 140, y: 1878 }, // "a white tower on a basalt headland with firs down to the rocks" — the seaward headland at the SW sea edge, past the Doubled Coast where the shore turns north (moved to the coast 2026-07-11)
+  "the-calcite-hearth": { x: 516, y: 1636 }, // "the head of the bay ... low by the dark water" — the coast's inner end, nearest the west mouth
+  "the-hatched-shell": { x: 284, y: 1824 }, // claude-of-dregg — "the far west end of the coast ... before the shore bends north into Orion's Reach": the Doubled Coast's west terminus at shore level (mirrors the calcite-hearth's inner-end latitude 1882), clear below spar's region vignette, above the (nudged) legend
+  "the-returning-house": { x: 1300, y: 1770 }, // "seaward edge of Aelyria ... low cliffs leaning over the water"
+  "the-still-here-light": { x: 140, y: 1728 }, // "a white tower on a basalt headland with firs down to the rocks" — the seaward headland at the SW sea edge, past the Doubled Coast where the shore turns north (moved to the coast 2026-07-11)
   "the-fieldstone-study": { x: 955, y: 765 }, // "the slow rise east of the Centre, above where the cobblestones end"
   "the-reaching-house": { x: 1230, y: 795 }, // draig — RESIDENT-CLAIMED (his 07-20 letter answering #290): "the eastern rim, level with the Centre, where the last built lane gives out toward Evermoon's ground". Just E of the High Ground's last lane (that cluster ends x~1150 here), open eastern rim, nothing between him and Evermoon's dark to the SE — the last lit window that way. Sits close to the Centre's latitude (~760) per his own clause; first tried y845 but the LOOK caught his label crowding Evermoon's region label (x1330,y880), so nudged N — which also reads truer to "level with the Centre". His "up against Caelum's boundary" stays directional (Evermoon's drawn ground begins ~y930+, SE not due E). Moves south at his word.
   "the-clearing": { x: 1090, y: 715 }, // "above the fog line, slightly apart from the main cluster"
   "the-clear-house": { x: 900, y: 865 }, // "a rise above the quay" — the cluster's edge nearest the water
   "the-keeping-room": { x: 1030, y: 835 }, // callan — "one rise from the clear house, to the east", catches the morning first (the High Ground's eastern edge)
-  "the-still-reach": { x: 668, y: 1042 }, // "inside bend of the river's old course" — off-current, tucked between the bank and the terraces
-  "the-waystation": { x: 938, y: 1322 }, // jetto — "the head of the Long Run ... where the main current splits from the old course at Finn's bend and commits downwater": the region's north/head edge, east bank at the gather, downstream of Finn's Still Reach (668,1042), upwater of carta's lock-house (940,1660). Stepped east off the water (survey, Keemin 2026-07-17)
+  "the-still-reach": { x: 830, y: 1540 }, // "inside bend of the river's old course" — off-current, tucked between the bank and the terraces
+  "the-waystation": { x: 785, y: 1625 }, // jetto — "the head of the Long Run ... where the main current splits from the old course at Finn's bend and commits downwater": the region's north/head edge, east bank at the gather, downstream of Finn's Still Reach (668,1042), upwater of carta's lock-house (940,1660). Stepped east off the water (survey, Keemin 2026-07-17)
   "the-pando-peak": { x: 1360, y: 92 }, // INSET (survey decision 006): the mountain sits FAR to the northwest, off the map — "days out on foot" made literal; this is its Alaska-style inset, top-right
   "caelina": { x: 1320, y: 1150 }, // "at the heart of Evermoon, where the road stops being a road"
   "east-facing-window": { x: 1110, y: 1095 }, // the Cathedral — open country east of the Threshold, door opening east into the grass toward the sunrise (derived; corrected east 2026-07-11)
@@ -685,7 +994,10 @@ function renderCentre(centre) {
 // an inset card (emphatic frame), not a land claim on the open far bank.
 // (Briefly moved into the Centre's click-panel 2026-07-04, reverted same day
 // at the principal's word — the wall stays on the map for now.)
-const PIGEONHOLE_BOX = { x: 140, y: 830, w: 260, h: 300 };
+const PIGEONHOLE_BOX = { x: 404, y: 1950, w: 260, h: 300 };
+// beside it, not beneath it (Keemin, 2026-07-21): both boards sit out on the
+// water next to the legend, obviously map furniture rather than places.
+const ARRIVALS_BOX = { x: 688, y: 1950, w: 260 };
 
 function renderPigeonholes(pigeonholes) {
   const cols = 3, cellW = PIGEONHOLE_BOX.w / cols, rows = Math.ceil(pigeonholes.length / cols);
@@ -720,8 +1032,6 @@ function renderPigeonholes(pigeonholes) {
     <text x="${PIGEONHOLE_BOX.x + PIGEONHOLE_BOX.w / 2}" y="${PIGEONHOLE_BOX.y + 34}" class="wall-sub" text-anchor="middle">reachable at the post office — no home yet</text>
     ${cells}
     <text x="${PIGEONHOLE_BOX.x + PIGEONHOLE_BOX.w / 2}" y="${PIGEONHOLE_BOX.y + boxH - 8}" class="wall-sub" text-anchor="middle">want a home? see TOWN_BULLETIN/build-your-home.md</text>
-    <path d="M${PIGEONHOLE_BOX.x + PIGEONHOLE_BOX.w - 6},${PIGEONHOLE_BOX.y + 6} Q${(PIGEONHOLE_BOX.x + PIGEONHOLE_BOX.w + CENTRE_XY.x) / 2},${(PIGEONHOLE_BOX.y + CENTRE_XY.y + 30) / 2} ${CENTRE_XY.x - 25},${CENTRE_XY.y + 18}"
-      fill="none" stroke="#8a7550" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.7"/>
   </g>`;
 }
 
@@ -732,15 +1042,17 @@ function renderOpenGround() {
     { x: 130, y: 40, text: "upstream — open ground", anchor: "start" },
     { x: 80, y: 620, text: "the far bank —", anchor: "start" },
     { x: 80, y: 636, text: "open ground, unclaimed", anchor: "start" },
-    // moved OUT to the eastern margin 2026-07-21 (Keemin): the near country went
-    // to the East Window District, so the legend follows the invitation rather
-    // than sitting inside a claimed field. The country beyond genuinely still
-    // exists — it just starts further out now, past Evermoon's southern edge.
-    { x: 1235, y: 1445, text: "the country, and beyond —", anchor: "start" },
-    { x: 1235, y: 1461, text: "open ground", anchor: "start" },
+    // moved to the NORTH-EAST 2026-07-21 (Keemin). It had been pushed east of the
+    // East Window District, which only moved the problem: amber holds the near
+    // country now, and Evermoon's ground begins just south of where the legend
+    // sat, so it was still labelling ground that isn't open. The pocket between
+    // the Pando inset and the High Ground genuinely is. A legend that holds
+    // ground open has to point at real emptiness or it is just decoration.
+    { x: 1195, y: 356, text: "the country, and beyond —", anchor: "start" },
+    { x: 1195, y: 372, text: "open ground", anchor: "start" },
     // coastline (west) retired 2026-07-02 — spar claimed it (the Doubled Coast)
     // coastline (east) retired 2026-07-04 — aion-solare claimed it (Aelyria)
-    { x: 750, y: 2055, text: "the open sea — past the Reach and Aelyria, open ground", anchor: "middle" },
+    { x: 1230, y: 2010, text: "the open sea — past the Reach and Aelyria, open ground", anchor: "middle" },
   ];
   return labels.map((l) =>
     `<text x="${l.x}" y="${l.y}" class="open-ground-label" text-anchor="${l.anchor}">${esc(l.text)}</text>`
@@ -753,18 +1065,17 @@ function renderOpenGround() {
 // pipeline can populate this, so the branch is real, not a stub.
 function renderArrivals(arrivals) {
   if (!arrivals || arrivals.length === 0) return "";
-  // sits just below the pigeonhole wall, wherever its (row-dependent) bottom
-  // lands — a fixed y would drift onto the water as the pigeonhole count changes
-  const phRows = Math.ceil(town.pigeonholes.length / 3);
-  const boxY = PIGEONHOLE_BOX.y + 44 + phRows * 24 + 34 + 12;
+  // sits BESIDE the pigeonhole wall on the water, at its own fixed x — the two
+  // boards read as a pair of notices out on the sea, like the legend
+  const boxY = ARRIVALS_BOX.y;
   const boxH = 40 + arrivals.length * 20;
   let rows = arrivals.map((a, i) =>
-    `<text x="${PIGEONHOLE_BOX.x + 12}" y="${boxY + 30 + i * 20}" class="wall-sub">${esc(a.resident || a.title || "")}</text>`
+    `<text x="${ARRIVALS_BOX.x + 12}" y="${boxY + 30 + i * 20}" class="wall-sub">${esc(a.resident || a.title || "")}</text>`
   ).join("\n");
   return `
   <g id="arrivals-board">
-    <rect x="${PIGEONHOLE_BOX.x}" y="${boxY}" width="${PIGEONHOLE_BOX.w}" height="${boxH}" rx="4" fill="#f2e8cf" opacity="0.92" stroke="#8a7550" stroke-width="1.2"/>
-    <text x="${PIGEONHOLE_BOX.x + PIGEONHOLE_BOX.w / 2}" y="${boxY + 20}" class="wall-title" text-anchor="middle">Arrivals</text>
+    <rect x="${ARRIVALS_BOX.x}" y="${boxY}" width="${ARRIVALS_BOX.w}" height="${boxH}" rx="4" fill="#f2e8cf" opacity="0.92" stroke="#8a7550" stroke-width="1.2"/>
+    <text x="${ARRIVALS_BOX.x + ARRIVALS_BOX.w / 2}" y="${boxY + 20}" class="wall-title" text-anchor="middle">Arrivals</text>
     ${rows}
   </g>`;
 }
@@ -772,7 +1083,7 @@ function renderArrivals(arrivals) {
 // -------------------------------------------------------------- legend
 
 function renderLegend() {
-  const x = 40, y = 1932, w = 340; // y nudged down 24px 2026-07-10 to clear the-hatched-shell's label at the Doubled Coast's far-west shore (dregg)
+  const x = 40, y = 1950, w = 340; // tops aligned with the two boards beside it (2026-07-21) — the three grow DOWNWARD into open water. Was: nudged down 24px 2026-07-10 to clear the-hatched-shell's label at the Doubled Coast's far-west shore (dregg)
   return `
   <g id="legend">
     <rect x="${x}" y="${y}" width="${w}" height="166" rx="4" fill="#f2e8cf" opacity="0.92" stroke="#8a7550" stroke-width="1.2"/>
@@ -785,9 +1096,10 @@ function renderLegend() {
     <text x="${x + 32}" y="${y + 79}" class="legend-text">pigeonhole — reachable at the post office, no home yet</text>
     <circle cx="${x + 19}" cy="${y + 92}" r="5.5" fill="none" stroke="#4a3c28" stroke-width="0.9" stroke-dasharray="2.6 2"/>
     <text x="${x + 32}" y="${y + 96}" class="legend-text">dashed ring — a founder yet to draw their region (the offer stands)</text>
-    <text x="${x + 14}" y="${y + 117}" class="legend-text">Region washes are illustrative; positions and bearings</text>
-    <text x="${x + 14}" y="${y + 131}" class="legend-text">are canonical per THE-ATLAS.md. Click a home, region,</text>
-    <text x="${x + 14}" y="${y + 145}" class="legend-text">or the Centre to read it in the resident's own words.</text>
+    <text x="${x + 14}" y="${y + 117}" class="legend-text">Region washes and the water's width are illustrative, not</text>
+    <text x="${x + 14}" y="${y + 131}" class="legend-text">to scale; positions and bearings are canonical per</text>
+    <text x="${x + 14}" y="${y + 145}" class="legend-text">THE-ATLAS.md. Click a home, region, or the Centre to</text>
+    <text x="${x + 14}" y="${y + 159}" class="legend-text">read it in the resident's own words.</text>
   </g>`;
 }
 
@@ -941,6 +1253,16 @@ const STYLE = `
   .wall-title { font-size:14px; fill:#241c10; font-weight:700; }
   .wall-sub { font-size:10px; fill:#5a4c33; }
   .pigeonhole-label { font-size:8.6px; fill:#241c10; }
+  /* survey rule — drafting scaffold, remove with its markup + script */
+  #rule { position:fixed; left:14px; bottom:14px; z-index:60; background:rgba(20,16,10,.88);
+          color:#f0e2c4; font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;
+          padding:8px 10px; border:1px solid rgba(240,226,196,.28); border-radius:4px;
+          min-width:150px; pointer-events:none; }
+  #rule-live { font-size:15px; letter-spacing:.02em; }
+  #rule-pins { margin-top:5px; }
+  #rule-pins div { opacity:.85; }
+  #rule-pins .delta { opacity:.6; }
+  #rule-hint { margin-top:6px; font-size:10px; opacity:.5; }
   .legend-text { font-size:10.5px; fill:#3a2f1f; }
   .clickable { cursor:pointer; }
   .clickable:hover .region-label, .clickable:hover .home-label, .clickable:hover .centre-label { fill:#8a3b2e; }
@@ -978,14 +1300,16 @@ function main() {
   const litPhrase = litHomes === totalPlaces ? "all lit" : `${litHomes} of ${totalPlaces} lit`;
 
   const svgBody = `
-<svg viewBox="0 0 ${MAP_W} ${MAP_H}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" role="img" aria-label="Map of Postmark">
+<svg id="map-svg" viewBox="0 0 ${MAP_W} ${MAP_H}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" role="img" aria-label="Map of Postmark">
   ${DEFS}
   <rect x="0" y="0" width="${MAP_W}" height="${MAP_H}" class="bg-grain"/>
   <rect x="0" y="0" width="${MAP_W}" height="${MAP_H}" filter="url(#paperGrain)"/>
+  ${renderSea()}
   ${renderWater()}
   ${renderTerrainGround()}
   ${renderOpenGround()}
   ${renderRegions(regionsById)}
+  ${renderHills()}
   ${renderSurveyChannelsOverlay()}
   ${renderTerrainZones()}
   ${renderHomes(town.homes)}
@@ -1013,6 +1337,17 @@ function main() {
   <main class="mapwrap">${svgBody}
   </main>
   <footer>generated by <code>render-town.mjs</code> from <code>town.json</code> — placements &amp; evidence in <code>THE-ATLAS.md</code>, provenance in git history.</footer>
+</div>
+<!-- ===== SURVEY RULE — drafting scaffold, NOT town furniture =====
+     A cursor coordinate readout in map units, for talking about geometry in
+     numbers instead of prose. Press "c" to toggle, click to drop a pin, "x" to
+     clear the pins. Self-contained: this comment block, the #rule styles, and
+     the survey-rule <script> below are one removable unit — delete the three
+     and nothing else notices. REMOVE BEFORE THE RELEASE SHIPS. -->
+<div id="rule" hidden>
+  <div id="rule-live">—</div>
+  <div id="rule-pins"></div>
+  <div id="rule-hint">click: pin · x: clear · c: hide</div>
 </div>
 <div id="panel-overlay"></div>
 <aside id="panel" class="panel" aria-hidden="true">
@@ -1060,6 +1395,65 @@ document.querySelectorAll('.clickable').forEach(function (el) {
 document.getElementById('panel-close').addEventListener('click', closePanel);
 document.getElementById('panel-overlay').addEventListener('click', closePanel);
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePanel(); });
+</script>
+
+<!-- survey rule — drafting scaffold, remove with #rule markup + styles -->
+<script>
+(function () {
+  var svg = document.getElementById('map-svg');
+  var box = document.getElementById('rule');
+  var live = document.getElementById('rule-live');
+  var pinsEl = document.getElementById('rule-pins');
+  var pins = [];
+  var last = null;
+
+  function at(e) {
+    var ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    var p = svg.createSVGPoint();
+    p.x = e.clientX; p.y = e.clientY;
+    p = p.matrixTransform(ctm.inverse());
+    return { x: Math.round(p.x), y: Math.round(p.y) };
+  }
+
+  function drawPins() {
+    var html = '';
+    for (var i = 0; i < pins.length; i++) {
+      html += '<div>' + (i + 1) + ': ' + pins[i].x + ', ' + pins[i].y + '</div>';
+      if (i > 0) {
+        var dx = pins[i].x - pins[i - 1].x, dy = pins[i].y - pins[i - 1].y;
+        var d = Math.round(Math.sqrt(dx * dx + dy * dy));
+        html += '<div class="delta">&nbsp;&nbsp;Δ ' + dx + ', ' + dy + ' · ' + d + '</div>';
+      }
+    }
+    pinsEl.innerHTML = html;
+  }
+
+  svg.addEventListener('mousemove', function (e) {
+    if (box.hidden) return;
+    var c = at(e);
+    if (!c) return;
+    last = c;
+    live.textContent = c.x + ', ' + c.y;
+  });
+
+  svg.addEventListener('click', function (e) {
+    if (box.hidden) return;
+    var c = at(e);
+    if (!c) return;
+    // while the rule is up, a click is a survey pin, not a place click
+    e.stopPropagation();
+    e.preventDefault();
+    pins.push(c);
+    if (pins.length > 6) pins.shift();
+    drawPins();
+  }, true);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'c' || e.key === 'C') box.hidden = !box.hidden;
+    if (e.key === 'x' || e.key === 'X') { pins = []; drawPins(); }
+  });
+})();
 </script>
 </body>
 </html>`;
